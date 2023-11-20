@@ -18,7 +18,7 @@ This will give you the exact SSH call.
 1. Download the script `ssh-wtf`
 
 ```shell
-curl <todo insert link> -o ssh-wtf && chmod +x ssh-wtf
+curl https://raw.githubusercontent.com/BarbieCue/ssh-wtf/main/ssh-wtf -o ssh-wtf && chmod +x ssh-wtf
 ```
 
 2. Execute it
