@@ -1,0 +1,150 @@
+#!/bin/sh
+
+scenario_1 () {
+  echo "
+I would like to have a port on my computer, that forwards to a port on another computer.
+
+     my computer                        another computer
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@
+ @                @                    @       (C)      @
+ @                @         ssh        @                @
+ @ my app -----> 1234 <============> 8080 ---> database @
+ @                @ (A)  username  (B) @                @
+ @   ssh client   @         (D)        @   ssh server   @
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@
+  
+  Example: 
+  My application on my computer is configured to connect to a database on localhost:1234.
+  This should connect it to the database on another-computer:8080."
+}
+
+conf_scenario_1 () {
+  read -p "What's my local port (A)?: " my_port
+  read -p "What's the other computers port (B)?: " other_port
+  read -p "What's the other computers address (C)?: " other_addr
+  read -p "What's my username for ssh authentication? (D)?: " username
+  cmd="ssh -L $my_port:localhost:$other_port $username@$other_addr"
+  print_result "$cmd" 
+}
+
+
+scenario_2 () {
+  echo "
+I would like to have a port on my computer, that forwards to a port on another computer. 
+But I can't connect directly to the other computer. Instead, I have to go via a jump host.
+
+     my computer                              jump                  another computer
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@@@
+ @                @                    @       (D)      @          @       (C)      @
+ @                @         ssh        @                @          @                @
+ @ my app -----> 1234 <==============> @      auth      @ -----> 8080 ---> database @
+ @                @ (A)   username     @                @      (B) @                @
+ @   ssh client   @         (E)        @   ssh server   @          @                @
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@@@
+  
+  Example: 
+  My application on my computer is configured to connect to a database on localhost:1234.
+  This should connect it to the database on another-computer:8080."
+}
+
+conf_scenario_2 () {
+  read -p "What's my local port (A)?: " my_port
+  read -p "What's the other computers port (B)?: " other_port
+  read -p "What's the other computers address (C)?: " other_addr
+  read -p "What's the jump hosts address (D)?: " jump_addr
+  read -p "What's my username for ssh authentication? (D)?: " username
+  cmd="ssh -L $my_port:$other_addr:$other_port $username@$jump_addr"
+  print_result "$cmd"
+}
+
+
+scenario_3 () {
+  echo "
+I want to open one of my computer's ports to the outside world so that others can access it.
+
+     my computer                             gateway
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@
+ @                @                    @       (C)      @
+ @                @          ssh       @                @
+ @ my app <----- 1234 <==============> @ <------------ 8080 <--- curl gateway:8080
+ @                @ (A)    username    @                @ (B)
+ @   ssh client   @          (D)       @   ssh server   @
+  @@@@@@@@@@@@@@@@                      @@@@@@@@@@@@@@@@
+
+  Important:
+  I'm sure that 'GatewayPorts' is set to 'yes' on the gateway. 
+  If this is not the case, it can be set by executing this command on the gateway:
+  
+  echo 'GatewayPorts yes' >> sshd_config
+  
+  Example: 
+  My application runs on my computer and i want people from outside of my network to access it."
+}
+
+conf_scenario_3 () {
+  read -p "What's my local port (A)?: " my_port
+  read -p "What's the gateway's port (B)?: " gw_port
+  read -p "What's the gateway's address (C)?: " gw_addr
+  read -p "What's my username for ssh authentication? (D)?: " username
+  cmd="ssh -R 0.0.0.0:$gw_port:localhost:$my_port $username@$gw_addr"
+  print_result "$cmd" 
+}
+
+scenario_4 () {
+  echo "
+I want to open a port on another computer in my network to the outside world so that others can access it.
+
+  another computer               my computer                           gateway
+  @@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@@@                    @@@@@@@@@@@@@@@@ 
+ @      (B)       @          @                @                  @       (D)      @
+ @                @          @                @       ssh        @                @
+ @ my app <----- 1234 <----- @                @ <==============> @ <------------ 8080 <--- curl gateway:8080
+ @                @ (A)      @                @     username     @                @ (C)
+ @                @          @   ssh client   @       (E)        @   ssh server   @
+  @@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@@@                    @@@@@@@@@@@@@@@@
+  
+  Important:
+  I'm sure that 'GatewayPorts' is set to 'yes' on the gateway. 
+  If this is not the case, it can be set by executing this command on the gateway:
+  
+  echo 'GatewayPorts yes' >> sshd_config
+    
+  Example: 
+  My application runs on another computer in my network and i want people from outside of my network to access it."
+}
+
+conf_scenario_4 () {
+  read -p "What's the other computers port (A)?: " other_port
+  read -p "What's the other computers address (B)?: " other_addr
+  read -p "What's the gateway's port (C)?: " gw_port
+  read -p "What's the gateway's address (D)?: " gw_addr
+  read -p "What's my username for ssh authentication? (E)?: " username
+  cmd="ssh -R 0.0.0.0:$gw_port:$other_addr:$other_port $username@$gw_addr"
+  print_result "$cmd"
+}
+
+print_result () {
+  echo
+  echo "This is my call:"
+  echo "$1"
+  echo
+  echo ".. or this, if i want to move the process into the background:"
+  echo "$1 -f -N"
+  echo
+  echo ".. or this, if I have to explicitly refer to my private key:"
+  echo "$1 -i <path/to/my/private/key>"
+}
+
+for i in {1..4}
+do
+  clear
+  scenario_$i
+  echo
+  read -p "Is this what i want? (y / enter): " choice
+  if [[ $choice = 'y' ]]
+  then
+  echo
+    conf_scenario_$i
+    exit 0
+  fi
+done
