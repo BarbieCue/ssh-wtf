@@ -15,10 +15,8 @@ This will give you the exact SSH call.
 
 # Usage
 
-Download the script `ssh-wtf` and execute it
+Execute the script
 
 ```shell
-curl https://raw.githubusercontent.com/BarbieCue/ssh-wtf/main/ssh-wtf -o ssh-wtf \
-&& chmod +x ssh-wtf \
-&& ./ssh-wtf
+sh -c "$(curl -sSL https://raw.githubusercontent.com/BarbieCue/ssh-wtf/main/ssh-wtf)"
 ```
